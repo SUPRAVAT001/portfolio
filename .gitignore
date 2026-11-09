@@ -1,0 +1,37 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Editor & IDE Directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python Artifacts & Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# Environment Files & Secrets (Defense-in-Depth)
+.env
+.env.*
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa*
+id_ed25519*
+*.kubeconfig
+kubeconfig*
+
+# Logs & Temporary Files
+*.log
+tmp/
+temp/
+.cache/
