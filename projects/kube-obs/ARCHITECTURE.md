@@ -1,136 +1,82 @@
 # Architecture: Kubernetes Observability Platform (`kube-obs`)
 
-A comprehensive architectural breakdown of telemetry ingestion, storage, alert routing, visualization, and ingress networking.
+[Project Overview](README.md) · [Source Repository](https://github.com/SUPRAVAT001/kube-obs)
 
 ---
 
-## 1. System Architecture Overview
+## System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Client["External Clients / SRE Workstation"]
-        BROWSER["HTTPS Browser / curl\n(/etc/hosts: *.local)"]
-        WEBHOOK["External Webhook\nReceiver / Alert Endpoint"]
-    end
+    CLIENT["Local Client (/etc/hosts -> Cluster Ingress IP)"] -->|HTTPS :443| NGINX
 
-    subgraph K8s["Kubernetes Cluster (Minikube runtime)"]
-        subgraph IngressLayer["Ingress & Edge Routing"]
-            NGINX["NGINX Ingress Controller\n(TLS Termination via Secrets)"]
-        end
+    subgraph K8s["Minikube Cluster (Kubernetes v1.35.1)"]
+        NGINX["NGINX Ingress Controller v1.14.0\nTLS Termination (observability-tls-secret)"]
 
-        subgraph ObsNamespace["Namespace: observability"]
-            direction TB
-            subgraph DataCollection["Telemetry Collection Agents"]
-                NE["Node Exporter (DaemonSet)\nHost CPU, Memory, Disk, Net\nPort 9100"]
-                KSM["kube-state-metrics (Deployment)\nK8s Objects, Pod Phases, Replicas\nPort 8080"]
-                CADV["cAdvisor / Kubelet\nContainer Cgroup Metrics\nPort 10250"]
-                APP["FastAPI Demo Workload (Deployment)\nCustom /metrics Endpoint\nPort 8080"]
-            end
-
-            subgraph StorageEngine["Core Engine & Persistence"]
-                PROM["Prometheus Server (StatefulSet)\n• TSDB Engine\n• Rule Evaluation Engine\n• Scrape Scheduler\nPVC: prometheus-db"]
-            end
-
-            subgraph Alerting["Incident Lifecycle"]
-                AM["Alertmanager (StatefulSet)\n• Alert Grouping & Dedup\n• Route Trees\n• Webhook Dispatcher"]
-            end
-
-            subgraph Visuals["Visualization as Code"]
-                GF["Grafana (Deployment)\n• PromQL Dashboards\n• k8s-sidecar ConfigMap Watcher\nPVC: grafana-storage"]
-            end
+        subgraph Obs["Namespace: observability"]
+            GF["Grafana v13.3.0\nConfigMap k8s-sidecar\n3 Provisioned Dashboards"]
+            PROM["Prometheus Server v3.15.1\nPrometheus Operator + TSDB (2Gi PVC)\n10s Scrape & Rule Evaluation"]
+            AM["Alertmanager v0.28.0\nGrouping & local-webhook Routing"]
+            NE["Node Exporter v1.9.0\nDaemonSet (Host /proc & /sys)"]
+            KSM["kube-state-metrics v2.15.0\nKubernetes API Object State"]
+            APP["observability-demo v1.0.1\n2 Replicas (Python http.server + prometheus_client)\n/metrics, /api/degrade, /api/webhook/alerts"]
         end
     end
 
-    %% Ingress routing
-    BROWSER -->|HTTPS:443 grafana.local| NGINX
-    BROWSER -->|HTTPS:443 prometheus.local| NGINX
-    BROWSER -->|HTTPS:443 app.local| NGINX
-    NGINX -->|HTTP:3000| GF
-    NGINX -->|HTTP:9090| PROM
-    NGINX -->|HTTP:8080| APP
+    NGINX -->|grafana.local| GF
+    NGINX -->|prometheus.local| PROM
+    NGINX -->|app.local| APP
 
-    %% Telemetry collection
-    PROM -->|Scrape :9100| NE
-    PROM -->|Scrape :8080| KSM
-    PROM -->|Scrape :10250| CADV
-    PROM -->|Scrape :8080/metrics| APP
-
-    %% Alerting and visualization
-    PROM -->|Fire Alerts (HTTP:9093)| AM
-    AM -->|Dispatch Notifications| WEBHOOK
-    GF -->|PromQL Queries (HTTP:9090)| PROM
-
-    style K8s fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
-    style ObsNamespace fill:#1e293b,stroke:#64748b,stroke-width:1px,color:#f8fafc
-    style IngressLayer fill:#1e1b4b,stroke:#818cf8,stroke-width:1px,color:#f8fafc
-    style StorageEngine fill:#022c22,stroke:#10b981,stroke-width:1px,color:#f8fafc
-    style Alerting fill:#450a0a,stroke:#f87171,stroke-width:1px,color:#f8fafc
-    style Visuals fill:#3b1e08,stroke:#fb923c,stroke-width:1px,color:#f8fafc
+    GF -->|PromQL Queries| PROM
+    PROM -->|10s Scrape via ServiceMonitor| APP
+    PROM -->|10s Scrape| NE
+    PROM -->|10s Scrape| KSM
+    PROM -->|136 Rules Evaluated -> Firing Alerts| AM
+    AM -->|POST /api/webhook/alerts| APP
 ```
 
 ---
 
-## 2. Ingestion & Scrape Pipelines
+## Component Stack
 
-The telemetry ingestion layer functions as a pull-based model executed by Prometheus on a strict 15-second scrape interval:
-
-### A. Infrastructure Metrics (Node Exporter)
-* Deployed as a Kubernetes `DaemonSet` on every cluster node.
-* Bypasses container cgroup virtualization to read directly from the host `/proc` and `/sys` filesystems.
-* Exposes critical hardware metrics: CPU core states (`idle`, `system`, `user`, `iowait`), memory allocation (buffers, cache, swap, dirty memory), disk read/write throughput, and network interface packet counters.
-
-### B. Cluster Orchestration State (Kube-State-Metrics)
-* Listens to the Kubernetes API server via a dedicated read-only `ClusterRole`.
-* Translates raw API objects into clean Prometheus metrics:
-  * `kube_deployment_status_replicas_available`
-  * `kube_pod_status_phase`
-  * `kube_pod_container_status_restarts_total`
-  * `kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}`
-
-### C. Application Runtime Telemetry (FastAPI Workload)
-* The instrumented microservice uses custom middleware to intercept incoming HTTP traffic.
-* Exposes standard Prometheus text metrics at `/metrics`:
-  * `app_uptime_seconds` (Gauge): Current running time since process initialization.
-  * `app_info` (Gauge): Version, environment, and tooling metadata.
-  * `app_http_requests_total` (Counter): Multi-dimensional request count partitioned by `method`, `endpoint`, and `status`.
+| Layer | Component | Version | Role |
+| :--- | :--- | :--- | :--- |
+| **Orchestration** | Kubernetes (Minikube) | v1.35.1 | Single-node cluster orchestration |
+| **Packaging** | Helm (`kube-prometheus-stack`) | v3.22.0 | Declarative Prometheus Operator & stack deployment |
+| **Metrics & TSDB** | Prometheus Server | v3.15.1 | Time-series scraping, 2Gi PVC TSDB, 136 alert rules |
+| **Visualization** | Grafana | v13.3.0 | PromQL dashboards auto-synced via `k8s-sidecar` |
+| **Alert Routing** | Alertmanager | v0.28.0 | Alert grouping, deduplication, and webhook dispatch |
+| **Exporters** | Node Exporter / Kube-State-Metrics | v1.9.0 / v2.15.0 | Host kernel telemetry & cluster object state |
+| **Ingress** | NGINX Ingress Controller | v1.14.0 | HTTPS reverse proxy with SAN TLS certificates |
+| **Workload** | `observability-demo` | v1.0.1 | Unprivileged Python HTTP service (`UID 10001`, 2 replicas) |
 
 ---
 
-## 3. Alert Routing & Notification Architecture
+## Alert Lifecycle Flow
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant App as FastAPI App
-    participant Prom as Prometheus Server
+    participant Test as Operator / curl
+    participant App as observability-demo
+    participant Prom as Prometheus (10s interval)
     participant AM as Alertmanager
-    participant WH as Webhook Receiver
 
-    App->>App: Pod enters CrashLoop or memory exceeds threshold
-    Note over Prom: Evaluates alert rules every 15s
-    Prom->>Prom: Rule: KubePodCrashLooping == 1 (Threshold crossed)
-    Note over Prom: Alert enters PENDING state (waiting for 'for: 2m' duration)
-    Prom->>Prom: Duration elapsed -> Alert transitions to FIRING
-    Prom->>AM: HTTP POST /api/v2/alerts (Payload: labels, annotations, startsAt)
-    Note over AM: Grouping & deduplication logic (group_by: [alertname, namespace])
-    Note over AM: Waits group_wait (10s) to batch co-occurring alerts
-    AM->>WH: HTTP POST /webhook (JSON Notification with alert context)
-    WH-->>AM: HTTP 200 OK (Acknowledged)
-    Note over App: Pod recovered or restarted successfully
-    Prom->>Prom: Rule evaluation drops to 0 -> Alert RESOLVED
-    Prom->>AM: HTTP POST /api/v2/alerts (endsAt timestamp populated)
-    AM->>WH: HTTP POST /webhook (JSON Notification: Alert Resolved)
+    Test->>App: POST /api/degrade
+    Note over App: Sets app_health_status = 0
+    Prom->>App: GET /metrics (ServiceMonitor)
+    Prom->>Prom: Evaluate ObservabilityDemoHealthDegraded (for: 15s)
+    Prom->>AM: Dispatch FIRING alert
+    AM->>App: POST /api/webhook/alerts (status: firing)
+    Test->>App: POST /api/recover
+    Note over App: Restores app_health_status = 1
+    Prom->>AM: Dispatch RESOLVED notification
+    AM->>App: POST /api/webhook/alerts (status: resolved)
 ```
 
 ---
 
-## 4. Ingress Networking & TLS Termination
+## Security Controls
 
-Access to the platform is unified through an **NGINX Ingress Controller**:
-* **TLS Termination**: Certificates stored in Kubernetes TLS Secrets (`tls-grafana`, `tls-prometheus`, `tls-app`) terminate HTTPS traffic at the cluster ingress boundary with modern cipher suites.
-* **SNI Routing**: Server Name Indication routes traffic based on virtual hostnames:
-  * `grafana.local` → Grafana service port 3000
-  * `prometheus.local` → Prometheus service port 9090
-  * `app.local` → Demo microservice port 8080
-* **Security Controls**: Ingress annotations enforce request size limits, connection timeouts, and SSL redirect headers.
-
+* **Workload Isolation**: Runs `observability-demo` under Kubernetes Restricted Pod Security Standards (`runAsNonRoot: true`, `UID 10001`, `allowPrivilegeEscalation: false`, `drop: [ALL]`, `seccompProfile: RuntimeDefault`).
+* **Encrypted Edge**: HTTPS enforced via NGINX Ingress and local SAN TLS Secrets (`grafana.local`, `prometheus.local`, `app.local`).
+* **Secret Hygiene**: Grafana admin credentials are generated inside Kubernetes Secrets without plaintext defaults checked into Git.
