@@ -35,3 +35,6 @@ kubeconfig*
 tmp/
 temp/
 .cache/
+
+# Local Evidence & Screenshots (Curated out of public repository)
+evidence/

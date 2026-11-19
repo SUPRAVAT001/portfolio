@@ -72,7 +72,7 @@ Every finding is classified according to the standard audit taxonomy:
 | **133–162** | Port Conflict Detection | `[PASS]` | Audits ports 80 and 443 using `ss -tulpn`. Correctly permits existing Caddy PID during re-deployment / upgrade while blocking foreign conflicts. |
 | **166–170** | SSH Preservation Check | `[PASS]` | Confirms `sshd.service` is active before modifying any networking or service state. |
 | **174–198** | DNS Preflight Check | `[WARNING]` | **Interactive Stdin Vulnerability:** Line 191 (`read -r response`) triggers an unhandled script exit under `set -e` if executed via a non-interactive SSH pipe (e.g., `ssh ... "sudo ./deploy.sh"`) when DNS has not yet propagated. *(See Section 4.2 for fix).* |
-| **207–224** | Automated Backups | `[PASS]` | Backs up existing `Caddyfile`, `caddy.service`, and creates `webroot_backup.tar.gz` in `/var/backups/caddy_predeploy_<timestamp>/`. Non-destructive. |
+| **207–224** | Automated Backups | `[PASS]` | Backs up existing `Caddyfile`, `caddy.service`, and creates `webroot_backup.tar.gz` in `[REDACTED_BACKUP_PATH]<timestamp>/`. Non-destructive. |
 | **230–261** | User & Directory Hierarchy | `[PASS]` | Creates system user `caddy` (`/sbin/nologin`). Creates `/var/log/caddy` and `/var/lib/caddy` with strict permissions prior to Caddyfile validation. |
 | **265–312** | Binary Download & Integrity | `[PASS]` | Downloads official `caddy_<version>_linux_amd64.tar.gz` and verifies cryptographic SHA-512 checksum against `caddy_<version>_checksums.txt` before installation. |
 | **316–331** | Caddyfile Validation Gate | `[PASS]` | Executes `/usr/local/bin/caddy validate` prior to touching systemd. Automatically reverts Caddyfile if validation fails. |
@@ -89,7 +89,7 @@ Every finding is classified according to the standard audit taxonomy:
 | :--- | :--- | :--- | :--- |
 | **64–78** | Privilege & Confirmation | `[PASS]` | Enforces root execution and requires explicit confirmation unless `-f`/`--force` is passed. |
 | **83–94** | Service Deactivation | `[PASS]` | Stops and disables only `caddy.service`. Unrelated services remain untouched. |
-| **100–136** | Backup Restoration | `[PASS]` | Locates latest `/var/backups/caddy_predeploy_*` and restores `Caddyfile.bak`, `caddy.service.bak`, and `webroot_backup.tar.gz`. |
+| **100–136** | Backup Restoration | `[PASS]` | Locates latest `[REDACTED_BACKUP_PATH]*` and restores `Caddyfile.bak`, `caddy.service.bak`, and `webroot_backup.tar.gz`. |
 | **138–157** | Clean Install Rollback | `[PASS]` | If no previous backup exists (fresh installation), safely archives `/var/www/veyrion.in` before removing it. Never deletes data without archiving. |
 | **163–175** | Firewall Rollback | `[WARNING]` | **Unconditional Firewall Removal:** When `--revert-firewall` is passed, it removes `http` and `https` unconditionally, without verifying if those services were present before deployment. *(See Section 4.3 for fix).* |
 | **180–210** | Core Service Health Check | `[PASS]` | Explicitly verifies that `sshd` (port 22) is active, restarts it if failed, confirms ports 80/443 are released, and checks `pmcd` and OCI agent. |
@@ -103,7 +103,7 @@ Every finding is classified according to the standard audit taxonomy:
 | **63–76** | BigRock DNS Instructions | `[WARNING]` | **Unrealistic TTL Assumption:** States `TTL: 300` (5 minutes). BigRock's standard `.in` DNS management interface enforces a minimum TTL of **14400 seconds (4 hours)** or 7200 seconds (2 hours). *(See Section 4.4 for fix).* |
 | **87–102** | OCI VCN Ingress Rules | `[PASS]` | Accurately documents the required Security List rules for ports 80 and 443 from `0.0.0.0/0`. |
 | **104–110** | Canonical URL Prerequisite | `[PASS]` | Explicitly notes that local HTML/SEO files must be updated to `https://veyrion.in/` before upload. |
-| **121–130** | Transfer Commands | `[PASS]` | Provides exact `rsync` commands using key `~/.ssh/devops-jarvis-oci`. |
+| **121–130** | Transfer Commands | `[PASS]` | Provides exact `rsync` commands using key `<ssh-identity-key>`. |
 | **158–214** | Verification Checklist | `[PASS]` | Comprehensive, copy-pasteable `curl` commands testing 301 canonical redirect, 308 HTTP redirect, TLS handshake, 404 page, and security headers. |
 | **218–238** | Rollback Instructions | `[PASS]` | Clearly documents both interactive and automated emergency rollback procedures. |
 

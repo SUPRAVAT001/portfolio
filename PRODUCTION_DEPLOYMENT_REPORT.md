@@ -1,7 +1,7 @@
 # Production Deployment Report: `veyrion.in`
 **Deployment Target:** Oracle Cloud Infrastructure (OCI) Compute Instance  
 **Instance Name:** `instance-20261115-1749` (`VM.Standard.E2.1.Micro`)  
-**Public IP:** `140.238.230.200` | **Private IP:** `10.0.0.221`  
+**Public IP:** `140.238.230.200` | **Private IP:** `[REDACTED_INTERNAL_IP]`  
 **Production Domain:** `veyrion.in` (Canonical Apex) & `www.veyrion.in` (Canonical 301 Redirect)  
 **Deployment Date & Time:** 2026-11-19 12:24:30 GMT  
 **Deployment Status:** **SUCCESSFULLY DEPLOYED & OPERATIONAL**  
@@ -108,7 +108,7 @@ Before applying rules, the pre-existing state was verified and preserved. The fo
 * **Added Services:** `http` (TCP 80), `https` (TCP 443).
 * **Current Active Services:** `dhcpv6-client http https ssh`
 * **SSH Port 22:** **Strictly untouched and fully active**.
-* **Recorded State:** Stored in `/var/backups/caddy_predeploy_20261119_122231/firewall_state.env` for safe rollback tracking.
+* **Recorded State:** Stored in `[REDACTED_BACKUP_PATH]` for safe rollback tracking.
 
 ---
 
@@ -179,8 +179,8 @@ x-frame-options: DENY
 
 A pre-deployment backup was automatically captured and preserved on the OCI instance:
 
-* **Backup Directory:** `/var/backups/caddy_predeploy_20261119_122231/`
-* **Recorded Firewall State:** `/var/backups/caddy_predeploy_20261119_122231/firewall_state.env`
+* **Backup Directory:** `[REDACTED_BACKUP_PATH]`
+* **Recorded Firewall State:** `[REDACTED_BACKUP_PATH]`
   - `FIREWALL_HTTP_PREEXISTING=false`
   - `FIREWALL_HTTPS_PREEXISTING=false`
 * **Staged Files:** Preserved in `/home/opc/portfolio-deploy/`
@@ -193,7 +193,7 @@ If a rollback is ever requested in the future, the audited rollback script can b
 
 ### Interactive Rollback:
 ```bash
-ssh -i ~/.ssh/devops-jarvis-oci -o IdentitiesOnly=yes opc@140.238.230.200
+ssh -i <ssh-identity-key> -o IdentitiesOnly=yes opc@140.238.230.200
 cd ~/portfolio-deploy/deployment
 sudo ./rollback.sh
 ```
