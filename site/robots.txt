@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://veyrion.in/sitemap.xml

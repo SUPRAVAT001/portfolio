@@ -1,0 +1,45 @@
+# Global configuration
+{
+	admin off
+	email supravatdash7399@gmail.com
+}
+
+# Canonical redirect: www.veyrion.in -> https://veyrion.in
+www.veyrion.in {
+	redir https://veyrion.in{uri} permanent
+}
+
+# Primary static engineering portfolio host
+veyrion.in {
+	root * /var/www/veyrion.in
+
+	encode zstd gzip
+	file_server
+
+	# Dedicated access log with automatic rotation
+	log {
+		output file /var/log/caddy/veyrion.in.access.log {
+			roll_size 10MiB
+			roll_keep 3
+			roll_keep_for 720h
+		}
+		format json
+	}
+
+	# Custom 404 error page handling
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+
+	# Hardened HTTP security headers
+	header {
+		Strict-Transport-Security "max-age=86400"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self';"
+		-Server
+	}
+}

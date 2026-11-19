@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FastAPI Todo Application — Live Production Deployment | Supravat Dash</title>
+  <meta name="description" content="Technical case study of the FastAPI Todo web application and REST API deployed live on Oracle Cloud Infrastructure with Caddy automated TLSv1.3, Neon PostgreSQL, and Alembic migrations." />
+  <meta name="author" content="Supravat Dash" />
+  <link rel="canonical" href="https://veyrion.in/projects/todoapp/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://veyrion.in/projects/todoapp/" />
+  <meta property="og:title" content="FastAPI Todo Application — Live Production Deployment | Supravat Dash" />
+  <meta property="og:description" content="Live production deployment of FastAPI on Oracle Cloud Infrastructure with Caddy TLSv1.3, Neon PostgreSQL, and Alembic migrations." />
+  <meta property="og:image" content="/images/todoapp/todoapp_login_live.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script>
+    (function(){
+      var t=localStorage.getItem('theme');
+      var d=window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', t||(d?'dark':'light'));
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+
+<!-- =====================================================
+     MINIMAL EDITORIAL NAVIGATION
+     ===================================================== -->
+<nav id="main-nav" class="nav" role="navigation" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="/" class="nav-brand" aria-label="Supravat Dash — Home">
+      <div class="nav-brand-monogram" aria-hidden="true">SD</div>
+      <span class="nav-brand-name">Supravat Dash</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/projects/" class="active">Projects</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+
+    <div class="nav-controls">
+      <button id="theme-toggle" class="nav-icon-btn" aria-label="Toggle dark/light theme">
+        <span id="theme-icon" aria-hidden="true"></span>
+      </button>
+
+      <a href="https://www.linkedin.com/in/supravat-dash" target="_blank" rel="noopener noreferrer"
+         class="nav-icon-btn" aria-label="LinkedIn profile">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+        </svg>
+      </a>
+
+      <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer"
+         class="nav-icon-btn" aria-label="GitHub profile">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+      </a>
+
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-mobile">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="nav-mobile" class="nav-mobile" role="menu">
+    <a href="/"          role="menuitem">Home</a>
+    <a href="/about/"    role="menuitem">About</a>
+    <a href="/projects/" role="menuitem" class="active">Projects</a>
+    <a href="/contact/"  role="menuitem">Contact</a>
+  </div>
+</nav>
+
+<!-- =====================================================
+     MAIN CONTENT
+     ===================================================== -->
+<main class="page-main">
+
+  <section class="section">
+    <div class="container">
+
+      <div style="margin-bottom: 24px;">
+        <a href="/projects/" class="text-link" style="font-size: 0.85rem; color: var(--text-muted);">
+          ← Back to Projects
+        </a>
+      </div>
+
+      <div style="margin-bottom: 32px;">
+        <div class="mono-eyebrow">Project 01 · Live Web Application &amp; Cloud Hosting</div>
+        <h1 style="margin-bottom: 8px;">FastAPI Todo Application — Live Production Deployment</h1>
+        <p class="lead" style="max-width: 760px;">
+          A full-stack, multi-user task management application and REST API deployed publicly on Oracle Cloud Infrastructure (OCI). Engineered with asynchronous FastAPI, PostgreSQL via SQLAlchemy 2.0, Alembic migrations, dual-channel JWT authentication, HMAC-signed CSRF protection, and Caddy automated TLSv1.3.
+        </p>
+      </div>
+
+      <div class="project-detail-layout">
+
+        <!-- MAIN COLUMN -->
+        <div class="project-detail-main">
+
+          <!-- PROMINENT LIVE DEMO CALLOUT -->
+          <div style="padding: 22px 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 32px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);"></span>
+                <span style="font-family: var(--font-mono); font-size: 0.78rem; color: #4ade80; font-weight: 700; letter-spacing: 0.05em;">LIVE PRODUCTION APPLICATION</span>
+              </div>
+              <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">
+                Oracle Cloud Infrastructure (ap-mumbai-1)
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                https://80-225-229-214.sslip.io · TLSv1.3 Encrypted · Caddy Reverse Proxy
+              </div>
+            </div>
+            <a href="https://80-225-229-214.sslip.io/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.92rem; font-weight: 600;">
+              Launch Live App ↗
+            </a>
+          </div>
+
+          <!-- SCREENSHOT GALLERY -->
+          <div class="project-detail-block">
+            <h2>Live Production Application Interface</h2>
+            <p>
+              Click any screenshot below to inspect the verified live production application interface running on Oracle Cloud Infrastructure:
+            </p>
+
+            <div class="gallery-container">
+              <div id="gallery-viewport" class="gallery-viewport" aria-label="Click to enlarge image">
+                <img id="gallery-viewport-img" src="/images/todoapp/todoapp_login_live.png" alt="FastAPI TodoApp Live Login Page" />
+                <div class="gallery-hint">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                  Click to enlarge
+                </div>
+              </div>
+              <div class="gallery-strip">
+                <div class="gallery-strip-thumb active" data-full="/images/todoapp/todoapp_login_live.png" data-caption="Live Production Login Interface (https://80-225-229-214.sslip.io/auth/login): Dual session authentication with CSRF protection">
+                  <img src="/images/todoapp/todoapp_login_live.png" alt="TodoApp Login" />
+                </div>
+                <div class="gallery-strip-thumb" data-full="/images/todoapp/todoapp_register_live.png" data-caption="Live User Registration Interface: Automatic assignment of role='user' with bcrypt password hashing">
+                  <img src="/images/todoapp/todoapp_register_live.png" alt="TodoApp Registration" />
+                </div>
+                <div class="gallery-strip-thumb" data-full="/images/todoapp/todoapp_api_docs_live.png" data-caption="Live Swagger / OpenAPI Documentation (https://80-225-229-214.sslip.io/docs): Interactive JSON REST API endpoints">
+                  <img src="/images/todoapp/todoapp_api_docs_live.png" alt="TodoApp OpenAPI Docs" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ARCHITECTURAL HIGHLIGHTS & VERSIONING -->
+          <div class="project-detail-block">
+            <h2>Framework &amp; Application Architecture</h2>
+            <p>
+              The system is engineered as a clean, modular Python application with strict separation of concerns across data persistence, business logic, templates, and security middleware:
+            </p>
+            <ul>
+              <li><strong>Version Boundaries:</strong> The application itself is versioned as <strong>TodoApp v1.0.0</strong>, powered by the <strong>FastAPI framework (v0.139.2 / v0.141.x)</strong> running on Uvicorn v0.52.1.</li>
+              <li><strong>Relational Data Layer:</strong> Backed by <strong>SQLAlchemy 2.0</strong> with fully typed declarative models (<code>Users</code> and <code>Todos</code>). Foreign key constraints enforce strict referential integrity with <code>ON DELETE CASCADE</code> so deleting a user cleanly purges their associated todos.</li>
+              <li><strong>Database Migrations:</strong> Managed via <strong>Alembic</strong>. The current head migration is <code>0002_reconcile_schema</code>, which tightens <code>NOT NULL</code> constraints, establishes server defaults (<code>is_active=true</code>, <code>role='user'</code>, <code>complete=false</code>), and creates a performance index on <code>owner_id</code>.</li>
+              <li><strong>Multi-Tenant Data Isolation:</strong> Every Todo query and mutation is strictly scoped at the database layer with <code>Todos.owner_id == current_user.id</code>, guaranteeing that no user can access or tamper with another tenant's tasks.</li>
+            </ul>
+          </div>
+
+          <!-- SECURITY ARCHITECTURE -->
+          <div class="project-detail-block">
+            <h2>Authentication &amp; Security Engineering</h2>
+            <p>
+              Security was engineered from first principles rather than relying on default framework assumptions:
+            </p>
+            <ul>
+              <li><strong>Dual-Channel Authentication:</strong> Serves browser users via HTTP-only, <code>SameSite="lax"</code>, <code>Secure</code> JWT session cookies, while simultaneously exposing a JSON REST API authenticated via standard <code>Authorization: Bearer &lt;token&gt;</code> headers via <code>POST /auth/token/login</code>.</li>
+              <li><strong>HMAC-SHA256 CSRF Middleware:</strong> Custom HTTP middleware ensures every browser session holds a cryptographically signed CSRF cookie. State-changing POST requests require a matching hidden form input token, preventing cross-site request forgery.</li>
+              <li><strong>Password Security:</strong> User passwords are encrypted using <code>bcrypt</code> via <code>passlib</code> with individual salts; zero plaintext passwords are ever persisted or logged.</li>
+              <li><strong>Role-Based Access Control (RBAC):</strong> Public user registration strictly assigns <code>role="user"</code>. Administrative endpoints (system statistics, user activation/deactivation) require <code>role="admin"</code>. Deactivated users (<code>is_active=False</code>) are immediately blocked from logging in.</li>
+            </ul>
+          </div>
+
+          <!-- PRODUCTION DEPLOYMENT & CONSTRAINTS -->
+          <div class="project-detail-block">
+            <h2>Production OCI Deployment &amp; Systemd</h2>
+            <p>
+              Deployed on an Oracle Cloud Infrastructure (OCI) Compute Instance (<code>VM.Standard.E2.1.Micro</code>, 1GB RAM) in the <code>ap-mumbai-1</code> region. Because micro-instances have strict memory limits, running heavy container orchestration engines risks Out-Of-Memory (OOM) failures. The application was engineered to run directly as a native Linux service:
+            </p>
+
+            <div style="background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; overflow-x: auto; margin-bottom: 16px;">
+              <span style="color: var(--text-muted);"># /etc/systemd/system/todoapp.service</span><br />
+              [Unit]<br />
+              Description=FastAPI Todo Application<br />
+              After=network.target<br /><br />
+              [Service]<br />
+              User=opc<br />
+              WorkingDirectory=/home/opc/apps/todoapp/FASTAPI_PRAC<br />
+              EnvironmentFile=/home/opc/apps/todoapp/FASTAPI_PRAC/.env<br />
+              ExecStart=/home/opc/apps/todoapp/FASTAPI_PRAC/.venv/bin/uvicorn TodoApp.main:app --host 127.0.0.1 --port 8000 --workers 1<br />
+              Restart=always<br />
+              RestartSec=5s<br /><br />
+              [Install]<br />
+              WantedBy=multi-user.target
+            </div>
+
+            <p>
+              Fronted by a <strong>Caddy v2</strong> reverse proxy that automatically obtains and renews Let's Encrypt TLSv1.3 certificates via elliptic curve cryptography (prime256v1). Caddy handles HTTP/2 and HTTP/3 QUIC negotiation, gzip/zstd compression, and enforces security headers (HSTS, X-Content-Type-Options: nosniff, X-Frame-Options: DENY).
+            </p>
+          </div>
+
+          <!-- AUTOMATED TEST RESULTS -->
+          <div class="project-detail-block">
+            <h2>Automated Verification &amp; Test Suite</h2>
+            <p>
+              The application codebase includes an automated test suite executed via <code>pytest</code> verifying functional correctness, tenant isolation, and security boundaries:
+            </p>
+
+            <div style="background: #090b0e; border: 1px solid #1e232c; border-radius: var(--radius-sm); padding: 16px; font-family: var(--font-mono); font-size: 0.78rem; color: #cbd5e1; line-height: 1.6; overflow-x: auto;">
+              <span style="color: #64748b;">$ python -m pytest -v tests/</span><br />
+              tests/test_admin.py::test_registration_cannot_create_admin_account <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_admin.py::test_normal_user_cannot_access_admin_routes <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_admin.py::test_admin_dashboard_stats_and_user_activation <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_successful_registration_api_and_login <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_successful_registration_html_flow <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_duplicate_registration_prevented <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_registration_password_validation <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_login_success_incorrect_password_and_logout <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_expired_and_invalid_jwt_rejected <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_inactive_user_cannot_login_or_access_routes <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_unauthorized_access_blocked <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_auth.py::test_profile_and_password_change_with_csrf <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_frontend.py::test_public_auth_pages_and_static_assets <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_frontend.py::test_authenticated_dashboard_navigation_and_templates <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_frontend.py::test_admin_navbar_link_visible_for_admin_only <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_isolation.py::test_user_a_cannot_access_modify_or_delete_user_b_todos <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_todos.py::test_todo_json_api_crud_and_validation <span style="color: #4ade80;">PASSED</span><br />
+              tests/test_todos.py::test_todo_html_crud_toggle_and_csrf <span style="color: #4ade80;">PASSED</span><br />
+              <span style="color: #4ade80; font-weight: 600;">======================== 18 passed, 1 skipped in 9.63s =========================</span>
+            </div>
+          </div>
+
+          <!-- PAGINATION -->
+          <div class="project-pagination">
+            <a href="/projects/devops-jarvis/" class="text-link">← Previous: DevOps Jarvis</a>
+            <a href="/projects/kube-obs/" class="text-link">Next: Kubernetes Observability →</a>
+          </div>
+
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="project-sidebar-box">
+          <div class="project-sidebar-title">Project Metadata</div>
+          <div class="project-sidebar-list">
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Deployment Status</span>
+              <span class="project-sidebar-val" style="color: #4ade80; font-weight: 600;">Live in Production</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Public URL</span>
+              <span class="project-sidebar-val"><a href="https://80-225-229-214.sslip.io/" target="_blank" rel="noopener noreferrer" style="color: #4ade80;">80-225-229-214.sslip.io ↗</a></span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Hosting Provider</span>
+              <span class="project-sidebar-val">Oracle Cloud (ap-mumbai-1)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Compute Shape</span>
+              <span class="project-sidebar-val">VM.Standard.E2.1.Micro (1GB RAM)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Application Version</span>
+              <span class="project-sidebar-val">TodoApp v1.0.0</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Framework Version</span>
+              <span class="project-sidebar-val">FastAPI v0.139.2 (Python 3.14)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Database &amp; ORM</span>
+              <span class="project-sidebar-val">PostgreSQL · SQLAlchemy 2.0</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Alembic Migration</span>
+              <span class="project-sidebar-val">0002_reconcile_schema (Head)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Reverse Proxy</span>
+              <span class="project-sidebar-val">Caddy v2 (Let's Encrypt TLSv1.3)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Service Supervisor</span>
+              <span class="project-sidebar-val">systemd (todoapp.service)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Automated Tests</span>
+              <span class="project-sidebar-val" style="color: #4ade80;">18 Passed (100% Green)</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a href="https://80-225-229-214.sslip.io/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="justify-content: center; font-weight: 600;">
+              Launch Live App ↗
+            </a>
+            <a href="https://80-225-229-214.sslip.io/docs" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="justify-content: center;">
+              Open API Docs (/docs) ↗
+            </a>
+            <a href="/projects/" class="btn btn-secondary" style="justify-content: center;">
+              All Projects
+            </a>
+          </div>
+        </aside>
+
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- LIGHTBOX MODAL -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image Preview">
+  <div class="lightbox-content">
+    <button id="lightbox-close" class="lightbox-close" aria-label="Close image preview">&times;</button>
+    <img id="lightbox-img" class="lightbox-img" src="" alt="" />
+    <div id="lightbox-caption" class="lightbox-caption"></div>
+  </div>
+</div>
+
+<!-- =====================================================
+     QUIETER EDITORIAL FOOTER
+     ===================================================== -->
+<footer class="footer-quiet">
+  <div class="container footer-quiet-inner">
+    <div class="footer-quiet-brand">Supravat Dash · AI &amp; Cloud Engineer</div>
+    <div class="footer-quiet-links">
+      <a href="/about/">About</a>
+      <a href="/projects/">Projects</a>
+      <a href="/contact/">Contact</a>
+      <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <a href="https://www.linkedin.com/in/supravat-dash" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+    </div>
+  </div>
+</footer>
+
+<button id="back-to-top" class="back-to-top" aria-label="Back to top">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script src="/js/main.js"></script>
+</body>
+</html>

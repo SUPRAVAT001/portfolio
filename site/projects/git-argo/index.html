@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitOps CI/CD Delivery Platform — Supravat Dash</title>
+  <meta name="description" content="Technical case study of the GitOps delivery platform built with Argo CD, GitLab CI/CD, and Kubernetes (Minikube) with verified pipeline #3045047835." />
+  <meta name="author" content="Supravat Dash" />
+  <link rel="canonical" href="https://veyrion.in/projects/git-argo/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://veyrion.in/projects/git-argo/" />
+  <meta property="og:title" content="GitOps CI/CD Delivery Platform — Supravat Dash" />
+  <meta property="og:description" content="Continuous delivery platform on Kubernetes (Minikube) separating CI from deployment state with Argo CD and GitLab." />
+  <meta property="og:image" content="/images/git-argo/11_argocd_synced_healthy_gitlab.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script>
+    (function(){
+      var t=localStorage.getItem('theme');
+      var d=window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', t||(d?'dark':'light'));
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+
+<!-- =====================================================
+     MINIMAL EDITORIAL NAVIGATION
+     ===================================================== -->
+<nav id="main-nav" class="nav" role="navigation" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="/" class="nav-brand" aria-label="Supravat Dash — Home">
+      <div class="nav-brand-monogram" aria-hidden="true">SD</div>
+      <span class="nav-brand-name">Supravat Dash</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/projects/" class="active">Projects</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+
+    <div class="nav-controls">
+      <button id="theme-toggle" class="nav-icon-btn" aria-label="Toggle dark/light theme">
+        <span id="theme-icon" aria-hidden="true"></span>
+      </button>
+
+      <a href="https://www.linkedin.com/in/supravat-dash" target="_blank" rel="noopener noreferrer"
+         class="nav-icon-btn" aria-label="LinkedIn profile">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+        </svg>
+      </a>
+
+      <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer"
+         class="nav-icon-btn" aria-label="GitHub profile">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+      </a>
+
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-mobile">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="nav-mobile" class="nav-mobile" role="menu">
+    <a href="/"          role="menuitem">Home</a>
+    <a href="/about/"    role="menuitem">About</a>
+    <a href="/projects/" role="menuitem" class="active">Projects</a>
+    <a href="/contact/"  role="menuitem">Contact</a>
+  </div>
+</nav>
+
+<!-- =====================================================
+     MAIN CONTENT
+     ===================================================== -->
+<main class="page-main">
+
+  <section class="section">
+    <div class="container">
+
+      <div style="margin-bottom: 24px;">
+        <a href="/projects/" class="text-link" style="font-size: 0.85rem; color: var(--text-muted);">
+          ← Back to Projects
+        </a>
+      </div>
+
+      <div style="margin-bottom: 32px;">
+        <div class="mono-eyebrow">CI/CD &amp; GitOps Delivery</div>
+        <h1 style="margin-bottom: 8px;">GitOps CI/CD Delivery Platform with Argo CD</h1>
+        <p class="lead" style="max-width: 720px;">
+          Declarative continuous delivery architecture separating CI from deployment state, with automated multi-stage builds, self-healing drift detection, and Git-driven instantaneous rollback.
+        </p>
+      </div>
+
+      <div class="project-detail-layout">
+
+        <!-- MAIN COLUMN -->
+        <div class="project-detail-main">
+
+          <!-- SCREENSHOT GALLERY -->
+          <div class="project-detail-block">
+            <h2>Pipeline Execution &amp; Reconciliation Evidence</h2>
+            <p>
+              Click any screenshot below to inspect the verified live artifacts: GitLab SaaS pipeline execution, automated GitHub promotion commits, Argo CD reconciliation, and Git revert rollbacks.
+            </p>
+
+            <div class="gallery-container">
+              <div id="gallery-viewport" class="gallery-viewport" aria-label="Click to enlarge image">
+                <img id="gallery-viewport-img" src="/images/git-argo/11_argocd_synced_healthy_gitlab.png" alt="Argo CD Synced Healthy Application Topology" />
+                <div class="gallery-hint">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                  Click to enlarge
+                </div>
+              </div>
+              <div class="gallery-strip">
+                <div class="gallery-strip-thumb active" data-full="/images/git-argo/11_argocd_synced_healthy_gitlab.png" data-caption="Argo CD Synced &amp; Healthy: Cluster Application Topology Deployed from GitLab Container Registry">
+                  <img src="/images/git-argo/11_argocd_synced_healthy_gitlab.png" alt="Argo CD Synced" />
+                </div>
+                <div class="gallery-strip-thumb" data-full="/images/git-argo/10_github_gitops_promotion_commit.png" data-caption="Automated GitOps Promotion Commit (a58cf62): CI Runner Promotes values.yaml with [skip ci]">
+                  <img src="/images/git-argo/10_github_gitops_promotion_commit.png" alt="GitHub Promotion Commit" />
+                </div>
+                <div class="gallery-strip-thumb" data-full="/images/git-argo/13_application_gitlab_version_endpoint.png" data-caption="Live Workload Verification: Application /version Endpoint Returning Immutable Commit SHA 9dbdf50d">
+                  <img src="/images/git-argo/13_application_gitlab_version_endpoint.png" alt="Application Version Endpoint" />
+                </div>
+                <div class="gallery-strip-thumb" data-full="/images/git-argo/05_argocd_self_healing.png" data-caption="Out-of-Band Drift Self-Healing: Manual Replica Tamper Remediated by Argo CD">
+                  <img src="/images/git-argo/05_argocd_self_healing.png" alt="Argo CD Self Healing" />
+                </div>
+                <div class="gallery-strip-thumb" data-full="/images/git-argo/06_gitops_git_rollback.png" data-caption="Declarative Git Revert Rollback (9f8c045): Zero-Downtime Rollback Triggered Exclusively via Git History">
+                  <img src="/images/git-argo/06_gitops_git_rollback.png" alt="GitOps Rollback" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- THE PROBLEM -->
+          <div class="project-detail-block">
+            <h2>The Engineering Problem</h2>
+            <p>
+              Traditional CI pipelines frequently execute direct imperative commands (such as <code>kubectl set image</code> or <code>helm upgrade</code>) into production Kubernetes clusters. This approach forces CI runners to hold high-privilege cluster tokens, and manual cluster modifications go undetected.
+            </p>
+            <p>
+              This project implements strict GitOps separation: GitLab handles CI, linting, unit testing, and container image publishing, while Argo CD inside the cluster continuously reconciles Kubernetes workloads strictly from the declared Git repository.
+            </p>
+          </div>
+
+          <!-- 5-STAGE PIPELINE -->
+          <div class="project-detail-block">
+            <h2>5-Stage Hosted GitLab SaaS Pipeline (#3045047835)</h2>
+            <ul>
+              <li><strong>validate (lint-and-validate · 33.0s):</strong> Python <code>py_compile</code> bytecode verification, YAML syntax schema validation, and Helm chart linting (<code>helm lint helm/gitops-demo</code>).</li>
+              <li><strong>test (unit-tests · 25.7s):</strong> Runs 6 automated Pytest tests validating application API endpoints, latency, and health handlers, exporting <code>junit-report.xml</code>.</li>
+              <li><strong>build (build-image · 60.2s):</strong> Unprivileged multi-stage container build via <code>docker:27-dind</code> over mutual TLS, embedding immutable git commit SHA (<code>9dbdf50d</code>).</li>
+              <li><strong>publish (publish-image · 46.6s):</strong> Publishes immutable <code>registry.gitlab.com/supravatdash7399/git-argo:9dbdf50d</code> and updating <code>:latest</code> tags in the GitLab Container Registry.</li>
+              <li><strong>update-gitops (promote-gitops · 21.7s):</strong> Promotes both <code>image.repository</code> and <code>image.tag</code> in the GitHub GitOps repository <code>values.yaml</code> via masked personal access token, committing <code>a58cf62</code> with <code>[skip ci]</code> to avoid recursive loops.</li>
+            </ul>
+          </div>
+
+          <!-- REAL ISSUES ENCOUNTERED & RESOLVED -->
+          <div class="project-detail-block">
+            <h2>Real Pipeline Issues Diagnosed &amp; Fixed</h2>
+            <ul>
+              <li><strong>YAML Colon-Parser Collision (commit <code>1fda3f5</code>):</strong> Unquoted <code>echo "==> ...: ${TAG}"</code> lines in <code>.gitlab-ci.yml</code> triggered YAML dictionary key syntax parser collisions. Resolved by single-quoting entire multiline script strings containing colons.</li>
+              <li><strong><code>alpine/git</code> Entrypoint Collision (commit <code>9dbdf50</code>):</strong> The base <code>alpine/git:2.45.2</code> container sets <code>ENTRYPOINT ["/usr/bin/git"]</code>, causing GitLab's shell runner to fail with <code>git: 'sh' is not a git command</code>. Resolved by overriding <code>entrypoint: [""]</code> in the job definition.</li>
+              <li><strong>Registry Repository Divergence (commit <code>2376a62</code>):</strong> Updating only <code>image.tag</code> left <code>image.repository</code> pointing to DockerHub instead of <code>CI_REGISTRY_IMAGE</code>. Expanded Stage 5 stream editor replacement to synchronize both repository and tag fields atomically.</li>
+            </ul>
+          </div>
+
+          <!-- PAGINATION -->
+          <div class="project-pagination">
+            <a href="/projects/kube-obs/" class="text-link">← Previous: Kubernetes Observability</a>
+            <a href="/projects/devops-jarvis/" class="text-link">Next: DevOps Jarvis →</a>
+          </div>
+
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="project-sidebar-box">
+          <div class="project-sidebar-title">Project Metadata</div>
+          <div class="project-sidebar-list">
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Pipeline Status</span>
+              <span class="project-sidebar-val" style="color: #4ade80;">Verified (#3045047835)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">CI System</span>
+              <span class="project-sidebar-val">GitLab SaaS (5-Stage Runner)</span>
+            </div>
+            <div class="project-sidebar-key">GitOps Engine</div>
+            <div class="project-sidebar-val">Argo CD v3.6.1 (Auto-Sync)</div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Self-Healing</span>
+              <span class="project-sidebar-val">Automatic OutOfSync Remediation</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Rollback Method</span>
+              <span class="project-sidebar-val">Declarative Git Revert</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <a href="https://gitlab.com/supravatdash7399/git-argo" target="_blank" rel="noopener noreferrer" class="btn-primary" style="justify-content: center;">
+              GitLab CI Repo ↗
+            </a>
+            <a href="https://github.com/SUPRAVAT001/git-argo" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="justify-content: center;">
+              GitHub GitOps Repo ↗
+            </a>
+          </div>
+        </aside>
+
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- LIGHTBOX MODAL -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image Preview">
+  <div class="lightbox-content">
+    <button id="lightbox-close" class="lightbox-close" aria-label="Close image preview">&times;</button>
+    <img id="lightbox-img" class="lightbox-img" src="" alt="" />
+    <div id="lightbox-caption" class="lightbox-caption"></div>
+  </div>
+</div>
+
+<!-- =====================================================
+     QUIETER EDITORIAL FOOTER
+     ===================================================== -->
+<footer class="footer-quiet">
+  <div class="container footer-quiet-inner">
+    <div class="footer-quiet-brand">Supravat Dash · AI &amp; Cloud Engineer</div>
+    <div class="footer-quiet-links">
+      <a href="/about/">About</a>
+      <a href="/projects/">Projects</a>
+      <a href="/contact/">Contact</a>
+      <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <a href="https://www.linkedin.com/in/supravat-dash" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+    </div>
+  </div>
+</footer>
+
+<button id="back-to-top" class="back-to-top" aria-label="Back to top">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script src="/js/main.js"></script>
+</body>
+</html>

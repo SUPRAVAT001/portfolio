@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevOps Jarvis — Governed AI SRE Control Plane | Flagship Case Study</title>
+  <meta name="description" content="Flagship technical case study of DevOps Jarvis: an autonomous, policy-governed SRE control plane in Python with OPA guardrails, dry-run simulation, distributed fencing leases, and Prometheus canary verification." />
+  <meta name="author" content="Supravat Dash" />
+  <link rel="canonical" href="https://veyrion.in/projects/devops-jarvis/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://veyrion.in/projects/devops-jarvis/" />
+  <meta property="og:title" content="DevOps Jarvis — Governed AI SRE Control Plane | Flagship Case Study" />
+  <meta property="og:description" content="Autonomous SRE control plane with deterministic OPA policy governance, dry-run simulation, PostgreSQL distributed lease fencing, and Prometheus canary telemetry." />
+  <meta property="og:image" content="/images/devops-jarvis/devops_jarvis_m1_dashboard_live.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    (function(){
+      var t=localStorage.getItem('theme');
+      var d=window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', t||(d?'dark':'light'));
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+
+<!-- =====================================================
+     MINIMAL EDITORIAL NAVIGATION
+     ===================================================== -->
+<nav id="main-nav" class="nav" role="navigation" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="/" class="nav-brand" aria-label="Supravat Dash — Home">
+      <div class="nav-brand-monogram" aria-hidden="true">SD</div>
+      <span class="nav-brand-name">Supravat Dash</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/projects/" class="active">Projects</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+
+    <div class="nav-controls">
+      <button id="theme-toggle" class="nav-icon-btn" aria-label="Toggle dark/light theme">
+        <span id="theme-icon" aria-hidden="true"></span>
+      </button>
+
+      <a href="https://www.linkedin.com/in/supravat-dash" target="_blank" rel="noopener noreferrer"
+         class="nav-icon-btn" aria-label="LinkedIn profile">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+        </svg>
+      </a>
+
+      <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer"
+         class="nav-icon-btn" aria-label="GitHub profile">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+      </a>
+
+      <button id="nav-hamburger" class="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-mobile">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="nav-mobile" class="nav-mobile" role="menu">
+    <a href="/"          role="menuitem">Home</a>
+    <a href="/about/"    role="menuitem">About</a>
+    <a href="/projects/" role="menuitem" class="active">Projects</a>
+    <a href="/contact/"  role="menuitem">Contact</a>
+  </div>
+</nav>
+
+<!-- =====================================================
+     MAIN CONTENT
+     ===================================================== -->
+<main class="page-main">
+
+  <section class="section">
+    <div class="container">
+
+      <!-- BREADCRUMBS -->
+      <div style="margin-bottom: 24px;">
+        <a href="/projects/" class="text-link" style="font-size: 0.85rem; color: var(--text-muted);">
+          ← Back to Projects
+        </a>
+      </div>
+
+      <!-- PAGE HEADER -->
+      <div style="margin-bottom: 32px;">
+        <div class="mono-eyebrow">Project 04 · Flagship AI Infrastructure Control Plane</div>
+        <h1 style="margin-bottom: 8px;">DevOps Jarvis — Governed AI SRE Control Plane</h1>
+        <p class="lead" style="max-width: 780px;">
+          An autonomous SRE control plane translating natural language intent into deterministic, policy-governed infrastructure mutations. Solves the existential risk of unconstrained AI execution by funneling all proposed actions through Open Policy Agent (OPA) validation, pre-execution dry-run simulation, PostgreSQL distributed lease fencing, and telemetry-aware canary progression.
+        </p>
+      </div>
+
+      <!-- SAFE RUNTIME STAGING BOUNDARY NOTICE -->
+      <div style="margin-bottom: 36px; padding: 22px 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 9px; height: 9px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);"></span>
+            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: #38bdf8; font-weight: 700; letter-spacing: 0.05em;">ACTIVE IN LOCAL DOCKER COMPOSE STAGING</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">Runtime: 127.0.0.1:8000 · Python 3.14 / FastAPI</span>
+        </div>
+
+        <h3 style="margin-bottom: 8px; font-size: 1.1rem;">Safe Staging Environment &amp; Execution Boundary</h3>
+        <p style="margin-bottom: 14px; font-size: 0.92rem; color: var(--text-secondary);">
+          DevOps Jarvis is currently active and fully operational in <strong>local Docker Compose staging on 127.0.0.1:8000</strong> with a multi-container stack: the FastAPI API control plane, an internal Open Policy Agent (OPA v0.68.0) container on <code>http://opa:8181</code>, and an internal PostgreSQL 17 cluster on <code>postgres:5432</code>.
+        </p>
+        <p style="margin-bottom: 0; font-size: 0.92rem; color: var(--text-secondary);">
+          <strong>Security Boundary:</strong> An autonomous infrastructure control plane must never be exposed publicly without enterprise SSO, cryptographic hardware tokens, and zero-trust perimeter controls. In staging, strict safety invariants are enforced: <code>JARVIS_ALLOW_LIVE_HOST_ACTUATION="false"</code> and <code>JARVIS_ALLOW_LIVE_CANARY_ACTUATION="false"</code>. All production-grade capabilities, policy decisions, and verified test suites are documented below using authentic repository artifacts.
+        </p>
+      </div>
+
+      <!-- SCREENSHOT GALLERY -->
+      <div class="project-detail-block">
+        <h2>Genuine Application Interface &amp; Control Plane Telemetry</h2>
+        <p>
+          Click any screenshot below to inspect the verified live interface, continuous health intelligence, and blast-radius dependency inspection captured from the running application:
+        </p>
+
+        <div class="gallery-container">
+          <div id="gallery-viewport" class="gallery-viewport" aria-label="Click to enlarge image">
+            <img id="gallery-viewport-img" src="/images/devops-jarvis/devops_jarvis_m1_dashboard_live.png" alt="DevOps Jarvis Live M1 Control Plane Dashboard" />
+            <div class="gallery-hint">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              Click to enlarge
+            </div>
+          </div>
+          <div class="gallery-strip">
+            <div class="gallery-strip-thumb active" data-full="/images/devops-jarvis/devops_jarvis_m1_dashboard_live.png" data-caption="Live M1 Control Plane Dashboard (http://127.0.0.1:8000): Governed task execution, active SRE loop, and OPA policy evaluation">
+              <img src="/images/devops-jarvis/devops_jarvis_m1_dashboard_live.png" alt="M1 Dashboard Live" />
+            </div>
+            <div class="gallery-strip-thumb" data-full="/images/devops-jarvis/engineering_context_ui.png" data-caption="Engineering Context Graph: Topological resource graph, composite health scores, and temporal change records">
+              <img src="/images/devops-jarvis/engineering_context_ui.png" alt="Context Graph UI" />
+            </div>
+            <div class="gallery-strip-thumb" data-full="/images/devops-jarvis/engineering_context_inspection.png" data-caption="Blast-Radius Safety Intelligence: Target context inspection modal evaluating direct upstream callers and dependency depth">
+              <img src="/images/devops-jarvis/engineering_context_inspection.png" alt="Context Inspection" />
+            </div>
+            <div class="gallery-strip-thumb" data-full="/images/devops-jarvis/health_intelligence_ui.png" data-caption="Continuous Health Intelligence: Active findings, candidate incident signals, and desired vs observed state drift">
+              <img src="/images/devops-jarvis/health_intelligence_ui.png" alt="Health Intelligence" />
+            </div>
+            <div class="gallery-strip-thumb" data-full="/images/devops-jarvis/health_intelligence_scan_clicked.png" data-caption="Real-Time Health Scan Telemetry: Live drift detector and capacity headroom evaluation across tenant workloads">
+              <img src="/images/devops-jarvis/health_intelligence_scan_clicked.png" alt="Health Scan Telemetry" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-detail-layout">
+
+        <!-- MAIN COLUMN: PROGRESSIVE TECHNICAL SECTIONS -->
+        <div class="project-detail-main">
+
+          <!-- 1. ARCHITECTURE & COMPONENT BREAKDOWN -->
+          <div class="project-detail-block">
+            <h2>1. Architecture &amp; Governed Execution Pipeline</h2>
+            <p>
+              The foundational design axiom of DevOps Jarvis is <strong>Governed Bounded Autonomy</strong>. Large Language Models are strictly confined to intent understanding, telemetry summarization, and proposing typed action graphs. Zero raw LLM strings are ever executed directly on infrastructure.
+            </p>
+
+            <div style="background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px; margin-bottom: 16px; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); overflow-x: auto;">
+              [Operator Intent / Natural Language]<br />
+              &nbsp;&nbsp;│<br />
+              &nbsp;&nbsp;▼<br />
+              <strong>1. Intent Understanding &amp; Typed Planner</strong> (src/jarvis/planning/)<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;• Validates schemas against Pydantic domain models; rejects unknown verbs.<br />
+              &nbsp;&nbsp;│<br />
+              &nbsp;&nbsp;▼<br />
+              <strong>2. Engineering Context Graph &amp; Dry-Run Simulation</strong> (src/jarvis/execution/simulation.py)<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;• Traverses topological dependencies; evaluates blast radius across namespaces.<br />
+              &nbsp;&nbsp;│<br />
+              &nbsp;&nbsp;▼<br />
+              <strong>3. Authoritative Policy Engine (OPA Server)</strong> (deployments/opa/policies/m1.rego)<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;• Evaluates Rego policy: ALLOW | REQUIRE_APPROVAL | BLOCK. Defaults to deny.<br />
+              &nbsp;&nbsp;│<br />
+              &nbsp;&nbsp;▼<br />
+              <strong>4. Cryptographic Human-in-the-Loop Gate</strong> (src/jarvis/approval/)<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;• High-risk actions halt at AWAITING_APPROVAL until signed via operator API.<br />
+              &nbsp;&nbsp;│<br />
+              &nbsp;&nbsp;▼<br />
+              <strong>5. PostgreSQL Distributed Leased Execution</strong> (src/jarvis/execution/lease_locking.py)<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;• Enforces monotonic fencing tokens; guarantees exactly-once execution safety.<br />
+              &nbsp;&nbsp;│<br />
+              &nbsp;&nbsp;▼<br />
+              <strong>6. Telemetry-Aware Verification &amp; Rollback</strong> (src/jarvis/canary/)<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;• Queries Prometheus for error rate / latency regression; aborts and resets on error.
+            </div>
+          </div>
+
+          <!-- 2. SAFETY WORKFLOWS A THROUGH G -->
+          <div class="project-detail-block">
+            <h2>2. Safety Workflow Demonstrations (A through G)</h2>
+            <p>
+              To prove system safety under production failure modes, 7 core workflows were formally implemented and verified against the test harness:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #4ade80;">Workflow A: Low-Risk Allowed Operation (Autonomous)</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">test_low_risk_is_allowed PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  Read-only inspections or log queries evaluate to <code>RiskLevel.LOW</code>. OPA rule <code>allow if { input.risk_level == "low"; not input.block }</code> triggers an immediate <code>ALLOW</code>, dispatching without human intervention.
+                </p>
+              </div>
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #fbbf24;">Workflow B: High-Risk Approval Workflow (Human Gate)</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">test_high_risk_requires_approval PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  Restarting a production service or scaling stateful replicas evaluates to <code>RiskLevel.HIGH</code>. OPA returns <code>require_approval: true</code>. State machine halts at <code>AWAITING_APPROVAL</code>. Execution controller hard-rejects dispatch until signed approval is submitted via <code>POST /api/v1/remediation-plans/{id}/approve</code>.
+                </p>
+              </div>
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #f87171;">Workflow C: Destructive Action Blocked by Policy (Fail-Closed)</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">test_critical_risk_requires_approval_via_block PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  Commands attempting destructive mutations (dropping tables, deleting namespaces, unvalidated image tags) evaluate to <code>RiskLevel.CRITICAL</code>. OPA rule <code>block if { input.block == true }</code> returns <code>block: true</code>. Execution controller blocks dispatch entirely. If OPA is unreachable, the engine fails closed with <code>OpaConnectionError</code>.
+                </p>
+              </div>
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #38bdf8;">Workflow D: Pre-Execution Dry-Run Simulation</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">test_simulation_with_dependency_context PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  Before live actuation, the simulator traverses the Engineering Context Graph to evaluate blast radius, upstream caller degradation, and manifest drift. If predicted blast-radius exceeds safety budgets, the task aborts with actionable diagnostics.
+                </p>
+              </div>
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #a78bfa;">Workflow E: Distributed Lease &amp; Stale Fencing Token Rejection</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">test_m9_postgres_distributed_lease PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  Worker 1 acquires an execution lease with <code>fencing_token = 1</code>. Worker 1 pauses (GC pause / network partition). Lease expires after TTL. Worker 2 reclaims the lease with <code>fencing_token = 2</code>. When Worker 1 wakes up and attempts renewal or commit with stale token 1, SQL <code>WHERE fencing_token = :token</code> matches 0 rows. Execution aborts immediately, preventing split-brain corruption.
+                </p>
+              </div>
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #38bdf8;">Workflow F: Crash Recovery &amp; Interrupted Workflow Resume</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">test_startup_recovers_expired_lease PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  If a control plane node crashes mid-execution, the periodic reconciliation loop detects tasks in <code>EXECUTING</code> with expired heartbeats. It reclaims the lease with an incremented fencing token, inspects target state to verify partial completion, and safely advances to verification or triggers compensation rollback.
+                </p>
+              </div>
+
+              <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong style="color: #f43f5e;">Workflow G: Canary Progression and Telemetry Safety / Abort</strong>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #4ade80;">verify_m8_phase3_prometheus PASSED</span>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 4px; color: var(--text-secondary);">
+                  Traffic weight shifts incrementally (10% $\to$ 25% $\to$ 50%). At each stage, Prometheus queries compute error rate delta ($\Delta_{err}$) and latency delta ($\Delta_{lat}$). Clean progression yields <code>SAFE_TO_PROGRESS</code>. An injected error surge ($\Delta_{err} \ge 5.0\%$, empirically verified at $+27.27\%$) triggers immediate <code>ABORT_AND_RECOVER</code>, resetting canary weight to 0% with zero downtime.
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 3. CAPABILITY STATUS MATRIX -->
+          <div class="project-detail-block">
+            <h2>3. Capability Status Classification Matrix</h2>
+            <p>
+              To maintain absolute engineering credibility, the platform strictly categorizes all architectural capabilities across four verified status tiers:
+            </p>
+
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: left;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted); font-family: var(--font-mono);">
+                    <th style="padding: 10px 8px;">Subsystem</th>
+                    <th style="padding: 10px 8px;">Status Tier</th>
+                    <th style="padding: 10px 8px;">Implementation Details &amp; Verification Evidence</th>
+                  </tr>
+                </thead>
+                <tbody style="color: var(--text-secondary);">
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Intent &amp; Plan Generation</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">Pydantic typed domain models, intent parser, plan synthesis. Verified in <code>tests/unit/planning/</code>.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Multi-Stage Orchestration</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">Deterministic state machine with dependency cascade handling (M10.1G engine, 8 REST endpoints).</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Policy Guardrails (OPA)</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">Authoritative Rego policy (<code>m1.rego</code>), fail-closed defaults. <strong>28/28 unit tests green</strong>.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Risk &amp; Approvals Engine</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">Blast-radius scoring, operator approval API with cryptographic audit lineage.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Execution &amp; Dry-Run</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">Pre-execution simulation, idempotency key deduplication. <strong>169 unit tests green</strong>.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Concurrency &amp; Lease Fencing</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">PostgreSQL distributed leases with monotonic fencing tokens. Alembic revision <code>c5d6e7f8a9b0</code>.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Telemetry &amp; Canary Analysis</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #4ade80; border-color: rgba(74, 222, 128, 0.3);">IMPLEMENTED &amp; VERIFIED</span></td>
+                    <td style="padding: 10px 8px;">Prometheus comparative telemetry evaluator, read-only host telemetry (M10.2A, 32/32 tests green).</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Multi-Cloud Live Actuation</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">IMPLEMENTED (SAFE STAGING)</span></td>
+                    <td style="padding: 10px 8px;">EKS, GKE, and AKS cloud cluster drivers implemented; live cloud mutation intentionally disabled in staging.</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">Local LLM Inference Node</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: #eab308; border-color: rgba(234, 179, 8, 0.3);">PLANNED</span></td>
+                    <td style="padding: 10px 8px;">On-premise GPU model serving node designed; currently utilizes structured local API heuristic provider.</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 8px; font-weight: 600; color: var(--text-primary);">BGP Anycast Routing Failover</td>
+                    <td style="padding: 10px 8px;"><span class="tag" style="color: var(--text-muted); border-color: var(--border);">DOCUMENTED (UNVERIFIED)</span></td>
+                    <td style="padding: 10px 8px;">Multi-cloud cross-region BGP failover designed in Milestone 3 spec; physical multi-cloud routing hardware not provisioned.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 4. AUTOMATED TEST EVIDENCE -->
+          <div class="project-detail-block">
+            <h2>4. Automated Test Verification Baseline</h2>
+            <p>
+              Test coverage is verified through an overall baseline of <strong>2,301 automated tests (0 failures)</strong> across exhaustive unit, failure-injection, and integration test suites:
+            </p>
+            <ul>
+              <li><strong>Milestone 9 Phase 3 Baseline:</strong> <strong>1,419 passing tests</strong> (0 regressions), including 23 failure-injection tests and 14 concurrency tests.</li>
+              <li><strong>Authoritative OPA Policy Suite:</strong> <strong>28/28 unit tests passed green</strong> (0.39s), validating autonomous low-risk allowance, mandatory high-risk approvals, and fail-closed critical blocks.</li>
+              <li><strong>Execution Controller Suite:</strong> <strong>169 unit tests passed green</strong>, validating idempotency, tenant boundaries, state transitions, and rollback mechanisms.</li>
+              <li><strong>M10.2A Read-Only Telemetry Suite:</strong> <strong>32/32 tests passed green</strong>, validating zero-mutation host telemetry via Prometheus node_exporter with strict SSRF protection.</li>
+            </ul>
+          </div>
+
+          <!-- PAGINATION -->
+          <div class="project-pagination">
+            <a href="/projects/git-argo/" class="text-link">← Previous: GitOps CI/CD Platform</a>
+            <a href="/projects/todoapp/" class="text-link">Next: FastAPI TodoApp →</a>
+          </div>
+
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="project-sidebar-box">
+          <div class="project-sidebar-title">Platform Metadata</div>
+          <div class="project-sidebar-list">
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Platform Role</span>
+              <span class="project-sidebar-val" style="color: var(--accent); font-weight: 600;">Flagship Case Study</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Runtime Environment</span>
+              <span class="project-sidebar-val">Docker Compose Staging</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Staging Host Binding</span>
+              <span class="project-sidebar-val">127.0.0.1:8000</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Current Milestone</span>
+              <span class="project-sidebar-val">M9 Phase 3 / M10.2A</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Policy Engine</span>
+              <span class="project-sidebar-val">Open Policy Agent (OPA) 0.68.0</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Database Backend</span>
+              <span class="project-sidebar-val">PostgreSQL 17 (Rev c5d6e7f8a9b0)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Distributed Locking</span>
+              <span class="project-sidebar-val">Monotonic Fencing Leases</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Verified Test Baseline</span>
+              <span class="project-sidebar-val" style="color: #4ade80;">1,419+ Passed (0 Regressions)</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">OPA Policy Tests</span>
+              <span class="project-sidebar-val" style="color: #4ade80;">28/28 Passed Green</span>
+            </div>
+            <div class="project-sidebar-row">
+              <span class="project-sidebar-key">Execution Unit Tests</span>
+              <span class="project-sidebar-val" style="color: #4ade80;">169 Passed Green</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="justify-content: center; font-weight: 600;">
+              GitHub Profile ↗
+            </a>
+            <a href="/projects/" class="btn btn-secondary" style="justify-content: center;">
+              All Projects
+            </a>
+          </div>
+        </aside>
+
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- LIGHTBOX MODAL -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image Preview">
+  <div class="lightbox-content">
+    <button id="lightbox-close" class="lightbox-close" aria-label="Close image preview">&times;</button>
+    <img id="lightbox-img" class="lightbox-img" src="" alt="" />
+    <div id="lightbox-caption" class="lightbox-caption"></div>
+  </div>
+</div>
+
+<!-- =====================================================
+     QUIETER EDITORIAL FOOTER
+     ===================================================== -->
+<footer class="footer-quiet">
+  <div class="container footer-quiet-inner">
+    <div class="footer-quiet-brand">Supravat Dash · AI &amp; Cloud Engineer</div>
+    <div class="footer-quiet-links">
+      <a href="/about/">About</a>
+      <a href="/projects/">Projects</a>
+      <a href="/contact/">Contact</a>
+      <a href="https://github.com/SUPRAVAT001" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <a href="https://www.linkedin.com/in/supravat-dash" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+    </div>
+  </div>
+</footer>
+
+<button id="back-to-top" class="back-to-top" aria-label="Back to top">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script src="/js/main.js"></script>
+</body>
+</html>
